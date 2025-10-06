@@ -28,6 +28,7 @@ class JournalEntry {
 - date : LocalDate
 - teacher : Teacher
 - student : Student
+- comment : String
 }
 
 class Course {
@@ -38,6 +39,9 @@ enum Grade {
  A
  B
  C
+ D
+ E
+ F
 }
 
 
