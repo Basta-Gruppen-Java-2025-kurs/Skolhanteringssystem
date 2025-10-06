@@ -1,0 +1,45 @@
+@startuml
+class SchoolSystem {
+{static} -instance:
+- students : List<Student>
+- teachers : List<Teacher>
+- courses : List<Course>
+- journal : List<JournalEntry>
+}
+
+abstract class Person {
+- name : String
+- securityNumber : String
+- email : String
+- courses : List<Course>
+}
+
+class Teacher {
+- experienceYear : int
+}
+
+class Student {
+- classYear : int
+}
+
+class JournalEntry {
+- course : Course
+- grade : Grade
+- date : LocalDate
+- teacher : Teacher
+- student : Student
+}
+
+class Course {
+- subject : String
+}
+
+enum Grade {
+ A
+ B
+ C
+}
+
+
+
+@enduml
