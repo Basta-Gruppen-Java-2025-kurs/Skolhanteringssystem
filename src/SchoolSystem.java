@@ -2,6 +2,7 @@ import Helpers.IMenu;
 import Helpers.TextMenu;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 
 public class SchoolSystem implements IMenu {
@@ -47,5 +48,22 @@ public class SchoolSystem implements IMenu {
 
     public ArrayList<JournalEntry> getJournal() {
         return journal;
+    }
+
+    public void listAllStudents(){
+        String format = "| %-20s | %-15s | %-30s | %-10s |%n";
+
+        System.out.printf(format, "Name", "Security No", "Email", "Class Year");
+        System.out.println("|----------------------|-----------------|-------------------------------|------------|");
+
+        getStudents().stream()
+                .sorted(Comparator.comparing(Student::getName))
+                .forEach(s -> System.out.printf(
+                        format,
+                        s.getName(),
+                        s.getSecurityNumber(),
+                        s.getEmail(),
+                        s.getClassYear()
+                ));
     }
 }
