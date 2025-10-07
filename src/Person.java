@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class Person {
@@ -6,11 +7,11 @@ public abstract class Person {
     private String email;
     private List<Course> courses;
 
-    public Person(String name, String securityNumber, String email, List<Course> courses) {
+    public Person(String name, String securityNumber, String email) {
         this.name = name;
         this.securityNumber = securityNumber;
         this.email = email;
-        this.courses = courses;
+        this.courses = new ArrayList<>();
     }
 
     public String getName() {
