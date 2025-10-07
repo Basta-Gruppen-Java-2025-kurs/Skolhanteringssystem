@@ -36,14 +36,17 @@ class Course {
 }
 
 enum Grade {
- A
- B
- C
- D
- E
- F
+ A, B, C, D, E, F,
+ NA, ABSENT,
+ SPECIAL
 }
 
-
+Teacher --|> Person
+Student --|> Person
+SchoolSystem --o Course
+SchoolSystem --o Teacher
+SchoolSystem --o JournalEntry
+SchoolSystem --o Student
+JournalEntry --* Grade
 
 @enduml
