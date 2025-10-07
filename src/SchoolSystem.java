@@ -1,9 +1,12 @@
 import Helpers.IMenu;
+import Helpers.SafeInput;
 import Helpers.TextMenu;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 public class SchoolSystem implements IMenu {
@@ -33,10 +36,78 @@ public class SchoolSystem implements IMenu {
     public void menu() {
         TextMenu.menuLoop(
                 "Welcome to School System!",
-                new String[] {"Exit", "Show all students", "Show all teachers"},
-                new Runnable[] {this::listAllStudents, this::displayAllTeachers},
+                new String[] {"Exit", "Show all students", "Show all teachers", "Add students", "Add teachers", "Add courses"},
+                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::addStudentsMenu, this::addTeachersMenu, this::addCoursesMenu},
                 false);
         System.out.println("Good bye.");
+    }
+
+    @FunctionalInterface
+    interface PersonProcessor {
+        void process(String name, String personalNumber, String email, int year);
+    }
+
+    private boolean enterNextPerson(String yearPrompt, PersonProcessor callback) {
+        AtomicBoolean fullDataEntered = new AtomicBoolean(false);
+        SafeInput si = new SafeInput(new Scanner(System.in));
+        String name = si.nextLine("Please enter full name (empty to stop):");
+        if (name.isBlank()) {
+            return false;
+        }
+        si.nameInputLoop("Please enter email (empty to stop):", "", ". Please try again", email -> {
+            if (email.isBlank()) {
+                return false;
+            }
+            String emailError = validateEmail(email);
+            if (!emailError.isBlank()) {
+                System.out.print(Capitalize(emailError));
+                return false;
+            }
+            si.nameInputLoop("Please enter security number (empty to stop)", "", ". Please try again", securityNumber -> {
+                if (securityNumber.isBlank()) {
+                    return true;
+                }
+                String validationError = validateSecurityNumber(securityNumber);
+                if (!validationError.isBlank()) {
+                    System.out.print(Capitalize(validationError));
+                    return false;
+                }
+                int years = si.nextInt(yearPrompt, "Wrong number. Please try again.", 0, 1000);
+                callback.process(name, securityNumber, email, years);
+                fullDataEntered.set(true);
+                return true;
+            });
+            return true;
+        });
+        return fullDataEntered.get();
+    }
+
+    private void addTeachersMenu() {
+        while(enterNextPerson("Please enter years of experience:", (name,securityNumber,email,experienceYears) -> {
+            try {
+                System.out.println(addTeacher(name, securityNumber, email, experienceYears) ? "Teacher added." : "Failed to add teacher.");
+            } catch (InvalidPersonalData e) {
+                System.out.println("Error adding a new teacher: " + e);
+            }
+        })) {
+            System.out.println("Add next teacher");
+        }
+    }
+
+    private void addStudentsMenu() {
+        while(enterNextPerson("Please enter class year:", (name,securityNumber,email,classYear) -> {
+            try {
+                System.out.println(addStudent(name, securityNumber, email, classYear) ? "Student added." : "Failed to add student.");
+            } catch (InvalidPersonalData e) {
+                System.out.println("Error adding a new student: " + e);
+            }
+        })) {
+            System.out.println("Add next student");
+        }
+    }
+
+    private void addCoursesMenu() {
+
     }
 
     public HashSet<Student> getStudents() {
@@ -89,7 +160,7 @@ public class SchoolSystem implements IMenu {
         String format = "| %-20s | %-15s | %-30s | %-18s |%n";
 
         System.out.printf(format, "Name", "Security No", "Email", "Experience (Years)");
-        System.out.println("|----------------------|-----------------|--------------------------------|--------------------|");
+        System.out.println("|----------------------|-----------------|---------------------------------|--------------------|");
 
         getTeachers().stream()
                 .sorted(Comparator.comparing(Teacher::getName))
@@ -105,32 +176,49 @@ public class SchoolSystem implements IMenu {
     }
 
     private String validatePersonalData(String name, String securityNumber, String email, int year) {
-        ArrayList<String> errors = new ArrayList<>();
+        ArrayList<String> errors = new ArrayList<>() {
+            @Override
+            public boolean add(String s) {
+                return !s.isBlank() && super.add(s);
+            }
+        };
         // validate name
         if (name.isBlank()) {
             errors.add("blank name");
         }
         // validate security number
-        if (securityNumber.isBlank()) {
-            errors.add("empty security number");
-        } else if (securityNumber.length() != 10 && securityNumber.length() != 12) {
-            errors.add("security number length must be 10 or 12 digits");
-        } else if (!Pattern.compile("d+").matcher(securityNumber).matches()) {
-            errors.add("security number must have decimal digits only");
-        }
+        errors.add(validateSecurityNumber(securityNumber));
         // validate email
-        if (email.isBlank()) {
-            errors.add("empty email");
-        } else if(!email.contains("@") || !email.contains(".")) {
-            errors.add("email is not in the format <address>@<domain>.<ext>");
-        }
+        errors.add(validateEmail(email));
         // validate year
         if (year <= 0) {
             errors.add("year must be positive");
         }
-        String errorString = String.join(", ", errors);
-        errorString = errorString.isBlank() ? errorString : errorString.substring(0,1).toUpperCase() + errorString.substring(1);
-        return errorString;
+        return Capitalize(String.join(", ", errors));
+    }
+
+    private static String validateEmail(String email) {
+        if (email.isBlank()) {
+            return "empty email";
+        } else if(!email.contains("@") || !email.contains(".")) {
+            return "email is not in the format <address>@<domain>.<ext>";
+        }
+        return "";
+    }
+
+    private static String Capitalize(String string) {
+        return string.isBlank() ? string : string.substring(0, 1).toUpperCase() + string.substring(1);
+    }
+
+    private static String validateSecurityNumber(String securityNumber) {
+        if (securityNumber.isBlank()) {
+            return "empty security number";
+        } else if (securityNumber.length() != 10 && securityNumber.length() != 12) {
+            return "security number length must be 10 or 12 digits";
+        } else if (!Pattern.compile("\\d+").matcher(securityNumber).matches()) {
+            return "security number must have decimal digits only";
+        }
+        return "";
     }
 
     public boolean addTeacher(String name, String securityNumber, String email, int experienceYears) throws InvalidPersonalData {
