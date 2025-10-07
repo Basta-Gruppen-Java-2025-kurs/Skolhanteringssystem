@@ -3,6 +3,7 @@ import Helpers.TextMenu;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.regex.Pattern;
 
 public class SchoolSystem implements IMenu {
     private static SchoolSystem instance;
@@ -47,5 +48,50 @@ public class SchoolSystem implements IMenu {
 
     public ArrayList<JournalEntry> getJournal() {
         return journal;
+    }
+
+    private String validatePersonalData(String name, String securityNumber, String email, int year) {
+        ArrayList<String> errors = new ArrayList<>();
+        // validate name
+        if (name.isBlank()) {
+            errors.add("blank name");
+        }
+        // validate security number
+        if (securityNumber.isBlank()) {
+            errors.add("empty security number");
+        } else if (securityNumber.length() != 10 && securityNumber.length() != 12) {
+            errors.add("security number length must be 10 or 12 digits");
+        } else if (!Pattern.compile("d+").matcher(securityNumber).matches()) {
+            errors.add("security number must have decimal digits only");
+        }
+        // validate email
+        if (email.isBlank()) {
+            errors.add("empty email");
+        } else if(!email.contains("@") || !email.contains(".")) {
+            errors.add("email is not in the format <address>@<domain>.<ext>");
+        }
+        // validate year
+        if (year <= 0) {
+            errors.add("year must be positive");
+        }
+        String errorString = String.join(", ", errors);
+        errorString = errorString.isBlank() ? errorString : errorString.substring(0,1).toUpperCase() + errorString.substring(1);
+        return errorString;
+    }
+
+    public boolean addTeacher(String name, String securityNumber, String email, int experienceYears) throws InvalidPersonalData {
+        String validation = validatePersonalData(name, securityNumber, email, experienceYears);
+        if (!validation.isEmpty()) {
+            throw new InvalidPersonalData("Error adding new teacher: " + validation);
+        }
+        return teachers.add(new Teacher(name, securityNumber, email, experienceYears));
+    }
+
+    public boolean addStudent(String name, String securityNumber, String email, int classYear) throws InvalidPersonalData {
+        String validation = validatePersonalData(name, securityNumber, email, classYear);
+        if (!validation.isEmpty()) {
+            throw new InvalidPersonalData("Error adding new student: " + validation);
+        }
+        return students.add(new Student(name, securityNumber, email, classYear));
     }
 }
