@@ -2,6 +2,7 @@ import Helpers.IMenu;
 import Helpers.TextMenu;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 
 public class SchoolSystem implements IMenu {
@@ -32,7 +33,7 @@ public class SchoolSystem implements IMenu {
         TextMenu.menuLoop(
                 "Welcome to School System!",
                 new String[] {"Exit", "Show all teachers"},
-                new Runnable[] {this::showAllTeachers},
+                new Runnable[] {this::displayAllTeachers},
                 false);
         System.out.println("Good bye.");
     }
@@ -53,20 +54,29 @@ public class SchoolSystem implements IMenu {
         return journal;
     }
 
-    public void showAllTeachers() {
-        System.out.println("=== List of Teachers ===");
+    public void displayAllTeachers() {
+        System.out.println("\n=== List of Teachers ===");
 
         if (teachers.isEmpty()) {
             System.out.println("No teachers found.");
             return;
         }
 
-        for (Teacher teacher : teachers) {
-            System.out.println("Name       : " + teacher.getName());
-            System.out.println("Email      : " + teacher.getEmail());
-            System.out.println("Experience : " + teacher.getExperienceYear() + " years");
-            System.out.println("-----------------------------");
-        }
+        String format = "| %-20s | %-15s | %-30s | %-18s |%n";
+
+        System.out.printf(format, "Name", "Security No", "Email", "Experience (Years)");
+        System.out.println("|----------------------|-----------------|--------------------------------|--------------------|");
+
+        getTeachers().stream()
+                .sorted(Comparator.comparing(Teacher::getName))
+                .forEach(t -> System.out.printf(
+                        format,
+                        t.getName(),
+                        t.getSecurityNumber(),
+                        t.getEmail(),
+                        t.getExperienceYear()
+                ));
+
         System.out.println();
     }
 }
