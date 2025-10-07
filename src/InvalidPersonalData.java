@@ -1,5 +1,5 @@
 public class InvalidPersonalData extends Exception {
-    InvalidPersonalData(String message) {
+    public InvalidPersonalData(String message) {
         super(message);
     }
 }

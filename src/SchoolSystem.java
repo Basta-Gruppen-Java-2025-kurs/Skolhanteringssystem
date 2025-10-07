@@ -125,4 +125,11 @@ public class SchoolSystem implements IMenu {
         }
         return students.add(new Student(name, securityNumber, email, classYear));
     }
+
+    public boolean addCourse(String subject) throws InvalidCourseData {
+        if (subject.isBlank()) {
+            throw new InvalidCourseData("Empty course name");
+        }
+        return courses.add(new Course(subject));
+    }
 }
