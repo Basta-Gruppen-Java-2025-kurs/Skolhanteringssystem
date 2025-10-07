@@ -32,8 +32,8 @@ public class SchoolSystem implements IMenu {
     public void menu() {
         TextMenu.menuLoop(
                 "Welcome to School System!",
-                new String[] {"Exit", "Show all teachers"},
-                new Runnable[] {this::displayAllTeachers},
+                new String[] {"Exit", "Show all students", "Show all teachers"},
+                new Runnable[] {this::listAllStudents, this::displayAllTeachers},
                 false);
         System.out.println("Good bye.");
     }
@@ -52,6 +52,29 @@ public class SchoolSystem implements IMenu {
 
     public ArrayList<JournalEntry> getJournal() {
         return journal;
+    }
+
+    public void listAllStudents(){
+        if (students.isEmpty()){
+            System.out.println("No students found.");
+            return;
+        }
+        String format = "| %-20s | %-15s | %-30s | %-10s |%n";
+
+        System.out.printf(format, "Name", "Security No", "Email", "Class Year");
+        System.out.println("|----------------------|-----------------|-------------------------------|------------|");
+
+        getStudents().stream()
+                .sorted(Comparator.comparing(Student::getName))
+                .forEach(s -> System.out.printf(
+                        format,
+                        s.getName(),
+                        s.getSecurityNumber(),
+                        s.getEmail(),
+                        s.getClassYear()
+                ));
+      
+        System.out.println();
     }
 
     public void displayAllTeachers() {
