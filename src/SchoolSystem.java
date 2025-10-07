@@ -107,7 +107,18 @@ public class SchoolSystem implements IMenu {
     }
 
     private void addCoursesMenu() {
-
+        SafeInput si = new SafeInput(new Scanner(System.in));
+        while(true) {
+            String courseName = si.nextLine("Please enter course name (empty to stop):");
+            if (courseName.isBlank()) {
+                return;
+            }
+            try {
+                System.out.println(addCourse(courseName) ? "Course added." : "Failed to add course.");
+            } catch (InvalidCourseData e) {
+                System.out.println("Error adding a course: " + e);
+            }
+        }
     }
 
     public HashSet<Student> getStudents() {
