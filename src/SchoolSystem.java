@@ -29,7 +29,11 @@ public class SchoolSystem implements IMenu {
 
     @Override
     public void menu() {
-        TextMenu.menuLoop("Welcome to School System!", new String[] {"Exit"}, new Runnable[] {}, false);
+        TextMenu.menuLoop(
+                "Welcome to School System!",
+                new String[] {"Exit", "Show all teachers"},
+                new Runnable[] {this::showAllTeachers},
+                false);
         System.out.println("Good bye.");
     }
 
@@ -47,5 +51,22 @@ public class SchoolSystem implements IMenu {
 
     public ArrayList<JournalEntry> getJournal() {
         return journal;
+    }
+
+    public void showAllTeachers() {
+        System.out.println("=== List of Teachers ===");
+
+        if (teachers.isEmpty()) {
+            System.out.println("No teachers found.");
+            return;
+        }
+
+        for (Teacher teacher : teachers) {
+            System.out.println("Name       : " + teacher.getName());
+            System.out.println("Email      : " + teacher.getEmail());
+            System.out.println("Experience : " + teacher.getExperienceYear() + " years");
+            System.out.println("-----------------------------");
+        }
+        System.out.println();
     }
 }
