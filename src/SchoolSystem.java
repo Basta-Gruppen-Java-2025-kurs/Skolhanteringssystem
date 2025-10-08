@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class SchoolSystem implements IMenu {
     private static SchoolSystem instance;
@@ -133,7 +132,7 @@ public class SchoolSystem implements IMenu {
                             .filter(t -> t.getCourses().contains(course))
                             .map(Teacher::getName)
                             .sorted()
-                            .collect(Collectors.toList());
+                            .toList();
 
                     long studentCount = students.stream()
                             .filter(s -> s.getCourses().contains(course))
