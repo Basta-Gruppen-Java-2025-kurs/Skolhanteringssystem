@@ -186,7 +186,7 @@ public class SchoolSystem implements IMenu {
     }
 
 
-    public boolean addTeacher(String name, String securityNumber, String email, int experienceYears) throws InvalidPersonalData {
+    public boolean addTeacher(String name, String securityNumber, String email, int experienceYears) {
         String validation = Validator.validatePersonalData(name, securityNumber, email, experienceYears);
         if (!validation.isEmpty()) {
             throw new InvalidPersonalData("Error adding new teacher: " + validation);
@@ -194,7 +194,7 @@ public class SchoolSystem implements IMenu {
         return teachers.add(new Teacher(name, securityNumber, email, experienceYears));
     }
 
-    public boolean addStudent(String name, String securityNumber, String email, int classYear) throws InvalidPersonalData {
+    public boolean addStudent(String name, String securityNumber, String email, int classYear) {
         String validation = Validator.validatePersonalData(name, securityNumber, email, classYear);
         if (!validation.isEmpty()) {
             throw new InvalidPersonalData("Error adding new student: " + validation);
@@ -202,7 +202,7 @@ public class SchoolSystem implements IMenu {
         return students.add(new Student(name, securityNumber, email, classYear));
     }
 
-    public boolean addCourse(String subject) throws InvalidCourseData {
+    public boolean addCourse(String subject) {
         if (subject.isBlank()) {
             throw new InvalidCourseData("Empty course name");
         }
