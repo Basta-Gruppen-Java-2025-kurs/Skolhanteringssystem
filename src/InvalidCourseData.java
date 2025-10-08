@@ -1,4 +1,4 @@
-public class InvalidCourseData extends Exception {
+public class InvalidCourseData extends RuntimeException {
     public InvalidCourseData(String description) {
         super(description);
     }

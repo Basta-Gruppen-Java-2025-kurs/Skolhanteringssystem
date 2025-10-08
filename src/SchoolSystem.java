@@ -7,7 +7,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
 
 public class SchoolSystem implements IMenu {
     private static SchoolSystem instance;
@@ -58,18 +57,18 @@ public class SchoolSystem implements IMenu {
             if (email.isBlank()) {
                 return false;
             }
-            String emailError = validateEmail(email);
+            String emailError = Validator.validateEmail(email);
             if (!emailError.isBlank()) {
-                System.out.print(Capitalize(emailError));
+                System.out.print(Validator.Capitalize(emailError));
                 return false;
             }
             si.nameInputLoop("Please enter security number (empty to stop)", "", ". Please try again", securityNumber -> {
                 if (securityNumber.isBlank()) {
                     return true;
                 }
-                String validationError = validateSecurityNumber(securityNumber);
+                String validationError = Validator.validateSecurityNumber(securityNumber);
                 if (!validationError.isBlank()) {
-                    System.out.print(Capitalize(validationError));
+                    System.out.print(Validator.Capitalize(validationError));
                     return false;
                 }
                 int years = si.nextInt(yearPrompt, "Wrong number. Please try again.", 0, 1000);
@@ -145,7 +144,7 @@ public class SchoolSystem implements IMenu {
         String format = "| %-20s | %-15s | %-30s | %-10s |%n";
 
         System.out.printf(format, "Name", "Security No", "Email", "Class Year");
-        System.out.println("|----------------------|-----------------|-------------------------------|------------|");
+        System.out.println("|----------------------|-----------------|--------------------------------|------------|");
 
         getStudents().stream()
                 .sorted(Comparator.comparing(Student::getName))
@@ -186,54 +185,9 @@ public class SchoolSystem implements IMenu {
         System.out.println();
     }
 
-    private String validatePersonalData(String name, String securityNumber, String email, int year) {
-        ArrayList<String> errors = new ArrayList<>() {
-            @Override
-            public boolean add(String s) {
-                return !s.isBlank() && super.add(s);
-            }
-        };
-        // validate name
-        if (name.isBlank()) {
-            errors.add("blank name");
-        }
-        // validate security number
-        errors.add(validateSecurityNumber(securityNumber));
-        // validate email
-        errors.add(validateEmail(email));
-        // validate year
-        if (year <= 0) {
-            errors.add("year must be positive");
-        }
-        return Capitalize(String.join(", ", errors));
-    }
-
-    private static String validateEmail(String email) {
-        if (email.isBlank()) {
-            return "empty email";
-        } else if(!email.contains("@") || !email.contains(".")) {
-            return "email is not in the format <address>@<domain>.<ext>";
-        }
-        return "";
-    }
-
-    private static String Capitalize(String string) {
-        return string.isBlank() ? string : string.substring(0, 1).toUpperCase() + string.substring(1);
-    }
-
-    private static String validateSecurityNumber(String securityNumber) {
-        if (securityNumber.isBlank()) {
-            return "empty security number";
-        } else if (securityNumber.length() != 10 && securityNumber.length() != 12) {
-            return "security number length must be 10 or 12 digits";
-        } else if (!Pattern.compile("\\d+").matcher(securityNumber).matches()) {
-            return "security number must have decimal digits only";
-        }
-        return "";
-    }
 
     public boolean addTeacher(String name, String securityNumber, String email, int experienceYears) throws InvalidPersonalData {
-        String validation = validatePersonalData(name, securityNumber, email, experienceYears);
+        String validation = Validator.validatePersonalData(name, securityNumber, email, experienceYears);
         if (!validation.isEmpty()) {
             throw new InvalidPersonalData("Error adding new teacher: " + validation);
         }
@@ -241,7 +195,7 @@ public class SchoolSystem implements IMenu {
     }
 
     public boolean addStudent(String name, String securityNumber, String email, int classYear) throws InvalidPersonalData {
-        String validation = validatePersonalData(name, securityNumber, email, classYear);
+        String validation = Validator.validatePersonalData(name, securityNumber, email, classYear);
         if (!validation.isEmpty()) {
             throw new InvalidPersonalData("Error adding new student: " + validation);
         }
