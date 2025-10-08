@@ -1,12 +1,10 @@
 import Helpers.IMenu;
 import Helpers.SafeInput;
-import Helpers.TextMenu;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static Helpers.TextMenu.*;
 
 public class SchoolSystem implements IMenu {
     private static SchoolSystem instance;
@@ -33,12 +31,32 @@ public class SchoolSystem implements IMenu {
 
     @Override
     public void menu() {
-        TextMenu.menuLoop(
+        menuLoop(
                 "Welcome to School System!",
-                new String[] {"Exit", "Show all students", "Show all teachers", "Add students", "Add teachers", "Add courses"},
-                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::addStudentsMenu, this::addTeachersMenu, this::addCoursesMenu},
+                new String[] {"Exit", "Show all students", "Show all teachers", "Add students", "Add teachers", "Add courses", "Assign to courses"},
+                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::addStudentsMenu, this::addTeachersMenu, this::addCoursesMenu, this::assignToCoursesMenu},
                 false);
         System.out.println("Good bye.");
+    }
+
+    private void assignToCoursesMenu() {
+        listMenuLoop("Select course:", "Back", "No courses found.", courses.stream().toList(),
+                course -> listMenuLoop("Assign teachers or students?", "Cancel", "No roles found.", Arrays.asList(Roles.values()),
+                        r -> {
+            ArrayList<Person> personList = new ArrayList<>(switch (r) {
+                case STUDENT -> students.stream().filter(s -> !s.getCourses().contains(course)).toList();
+                case TEACHER -> teachers.stream().filter(t -> !t.getCourses().contains(course)).toList();
+            });
+            String role = r.toString().toLowerCase();
+            listMenuLoop("Add next " + role + ": ", "Stop", "No " + role + "s found.", () -> personList, person -> {
+                if (person.assignCourse(course)) {
+                    personList.remove(person);
+                    System.out.println(r.getName() + " added.");
+                } else {
+                    System.out.println("Failed to add " + r.getName().toLowerCase() + ".");
+                }
+            }, false);
+        }, true), true);
     }
 
     @FunctionalInterface
@@ -186,7 +204,7 @@ public class SchoolSystem implements IMenu {
     }
 
 
-    public boolean addTeacher(String name, String securityNumber, String email, int experienceYears) throws InvalidPersonalData {
+    public boolean addTeacher(String name, String securityNumber, String email, int experienceYears) {
         String validation = Validator.validatePersonalData(name, securityNumber, email, experienceYears);
         if (!validation.isEmpty()) {
             throw new InvalidPersonalData("Error adding new teacher: " + validation);
@@ -194,7 +212,7 @@ public class SchoolSystem implements IMenu {
         return teachers.add(new Teacher(name, securityNumber, email, experienceYears));
     }
 
-    public boolean addStudent(String name, String securityNumber, String email, int classYear) throws InvalidPersonalData {
+    public boolean addStudent(String name, String securityNumber, String email, int classYear) {
         String validation = Validator.validatePersonalData(name, securityNumber, email, classYear);
         if (!validation.isEmpty()) {
             throw new InvalidPersonalData("Error adding new student: " + validation);
@@ -202,7 +220,7 @@ public class SchoolSystem implements IMenu {
         return students.add(new Student(name, securityNumber, email, classYear));
     }
 
-    public boolean addCourse(String subject) throws InvalidCourseData {
+    public boolean addCourse(String subject) {
         if (subject.isBlank()) {
             throw new InvalidCourseData("Empty course name");
         }
