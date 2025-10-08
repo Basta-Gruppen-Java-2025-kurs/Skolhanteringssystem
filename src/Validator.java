@@ -14,14 +14,14 @@ public class Validator {
             errors.add("blank name");
         }
         // validate security number
-        errors.add(Validator.validateSecurityNumber(securityNumber));
+        errors.add(validateSecurityNumber(securityNumber));
         // validate email
-        errors.add(Validator.validateEmail(email));
+        errors.add(validateEmail(email));
         // validate year
         if (year <= 0) {
             errors.add("year must be positive");
         }
-        return Validator.Capitalize(String.join(", ", errors));
+        return Capitalize(String.join(", ", errors));
     }
 
     public static String validateEmail(String email) {
