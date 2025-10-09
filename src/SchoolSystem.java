@@ -36,6 +36,7 @@ public class SchoolSystem implements IMenu {
                 .setHeader("Welcome to School System!")
                 .addItem("Show all students", this::listAllStudents)
                 .addItem("Show all teachers", this::displayAllTeachers)
+                .addItem("View a course", this::viewCourse)
                 .addItem("Add students", this::addStudentsMenu)
                 .addItem("Add teachers", this::addTeachersMenu)
                 .addItem("Add courses", this::addCoursesMenu)
@@ -167,7 +168,7 @@ public class SchoolSystem implements IMenu {
         String format = "| %-20s | %-15s | %-30s | %-10s |%n";
 
         System.out.printf(format, "Name", "Security No", "Email", "Class Year");
-        System.out.println("|----------------------|-----------------|--------------------------------|------------|");
+        System.out.println("|----------------------|-----------------|-------------------------------|------------|");
 
         getStudents().stream()
                 .sorted(Comparator.comparing(Student::getName))
@@ -193,7 +194,7 @@ public class SchoolSystem implements IMenu {
         String format = "| %-20s | %-15s | %-30s | %-18s |%n";
 
         System.out.printf(format, "Name", "Security No", "Email", "Experience (Years)");
-        System.out.println("|----------------------|-----------------|---------------------------------|--------------------|");
+        System.out.println("|----------------------|-----------------|--------------------------------|--------------------|");
 
         getTeachers().stream()
                 .sorted(Comparator.comparing(Teacher::getName))
@@ -205,6 +206,74 @@ public class SchoolSystem implements IMenu {
                         t.getExperienceYear()
                 ));
 
+        System.out.println();
+    }
+
+    public void viewCourse(){
+        if (courses.isEmpty()){
+            System.out.println("No courses found.");
+            return;
+        }
+
+        listMenuLoop(
+                "Select a course to view details:",
+                "Back to main menu",
+                "No active courses",
+                new ArrayList<>(courses),
+                this::showCourseDetails,
+                true
+
+        );
+    }
+
+    public void showCourseDetails(Course course){
+        System.out.println("\n=== Course Details ===");
+        System.out.println("Course: "+ course.getName());
+        System.out.println("------------------------");
+
+        System.out.println("\nTeachers:");
+        var courseTeachers = getTeachers().stream()
+                .filter(t -> t.getCourses().contains(course))
+                .sorted(Comparator.comparing(Teacher::getName))
+                .toList();
+
+        if (courseTeachers.isEmpty()){
+            System.out.println(" None assigned.");
+
+        }else {
+            courseTeachers.forEach(t -> System.out.println("  - " + t.getName()));
+        }
+
+        System.out.println("\nStudents:");
+        var courseStudents = getStudents().stream()
+                .filter(s -> s.getCourses().contains(course))
+                .sorted(Comparator.comparing(Student::getName))
+                .toList();
+
+        if (courseStudents.isEmpty()){
+            System.out.println(" None enrolled.");
+        }else {
+            courseStudents.forEach(s -> {
+                var entry = journal.stream()
+                        .filter(j -> j.getCourse().equals(course)&& j.getStudent().equals(s))
+                        .reduce((first, second) -> second)
+                        .orElse(null);
+
+                String gradeText;
+                if (entry == null){
+                    gradeText = "No grade recorded";
+                }else {
+                    gradeText = entry.getGrade().getName();
+
+                    if (entry.getGradeComment() != null){
+                        gradeText += " - " + entry.getGradeComment();
+                    }
+                }
+
+                System.out.println("  - " + s.getName() + " (" + gradeText + ")");
+            });
+
+        }
         System.out.println();
     }
 
