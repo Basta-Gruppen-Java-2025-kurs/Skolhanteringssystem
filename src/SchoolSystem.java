@@ -1,7 +1,7 @@
 import Helpers.IMenu;
 import Helpers.MenuBuilder;
 import Helpers.SafeInput;
-import Helpers.TextMenu;
+
 import java.util.*;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -47,6 +47,7 @@ public class SchoolSystem implements IMenu {
                 .addItem("Add teachers", this::addTeachersMenu)
                 .addItem("Add courses", this::addCoursesMenu)
                 .addItem("Assign to courses", this::assignToCoursesMenu)
+                .addItem("Remove course from Teacher or Student", this::removeCourseMenu)
                 .runMenu();
         System.out.println("Good bye.");
     }
@@ -356,5 +357,65 @@ public class SchoolSystem implements IMenu {
             throw new InvalidCourseData("Empty course name");
         }
         return courses.add(new Course(subject));
+    }
+    public void removeCourseMenu(){
+        menuLoop(
+                "Remove a course from:",
+                new String[] {"Return to main menu", "Teacher", "Student"},
+                new Runnable[]{this::removeCourseFromTeacher, this::removeCourseFromStudent},
+                true
+        );
+    }
+
+    public void removeCourseFromTeacher(){
+        removeCourseFromList(
+                "Select a teacher to remove them from a course",
+                "There are no teachers",
+                new ArrayList<>(teachers)
+        );
+    }
+
+    public void removeCourseFromStudent(){
+        removeCourseFromList(
+                "Select a student to remove them from a course",
+                "There are no students",
+                new ArrayList<>(students)
+        );
+    }
+
+    public void selectCourseToRemove(Person person){
+        if (person.getCourses().isEmpty()){
+            System.out.println("This person has no courses");
+            return;
+        }
+
+        listMenuLoop(
+                "Select the course to remove from "+person.getName(),
+                "Back to main menu",
+                "No courses",
+                new ArrayList<>(person.getCourses()),
+                course -> {
+                    person.removeCourse(course);
+                    System.out.println("Removed successfully!");
+                },
+                true
+        );
+
+    }
+
+    private void removeCourseFromList(String header, String emptyMessage, List<? extends Person> list){
+        if (list.isEmpty()){
+            System.out.println(emptyMessage);
+            return;
+        }
+
+        listMenuLoop(
+                header,
+                "Back to main menu",
+                "No entries",
+                new ArrayList<>(list),
+                this::selectCourseToRemove,
+                true
+        );
     }
 }

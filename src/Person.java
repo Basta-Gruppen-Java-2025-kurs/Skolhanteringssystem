@@ -48,6 +48,10 @@ public abstract class Person implements Named {
         return courses.add(course);
     }
 
+    public void removeCourse(Course course){
+        courses.remove(course);
+    }
+
     public boolean unassignCourse(Course course) {
         return courses.remove(course);
     }
