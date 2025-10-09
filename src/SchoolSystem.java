@@ -3,6 +3,11 @@ import Helpers.SafeInput;
 import Helpers.TextMenu;
 
 import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SchoolSystem implements IMenu {
@@ -32,8 +37,8 @@ public class SchoolSystem implements IMenu {
     public void menu() {
         TextMenu.menuLoop(
                 "Welcome to School System!",
-                new String[] {"Exit", "Show all students", "Show all teachers", "View a course", "Add students", "Add teachers", "Add courses", "Remove course from Teacher or Student"},
-                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::viewCourse, this::addStudentsMenu, this::addTeachersMenu, this::addCoursesMenu, this::removeCourseMenu},
+                new String[] {"Exit", "Show all students", "Show all teachers", "View a course", "Show all courses", "Add students", "Add teachers", "Add courses", "Remove course from Teacher or Student"},
+                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::viewCourse, this::displayAllCourses, this::addStudentsMenu, this::addTeachersMenu, this::addCoursesMenu, this::removeCourseMenu},
                 false);
         System.out.println("Good bye.");
     }
@@ -182,8 +187,57 @@ public class SchoolSystem implements IMenu {
         System.out.println();
     }
 
+
+    public void displayAllCourses() {
+        System.out.println("\n=== List of Courses ===");
+
+        if(courses.isEmpty()) {
+
+  
+
+        String format = "| %-21s | %-23s | %10s |%n";
+        String separator = "|-----------------------|-------------------------|------------|";
+
+        System.out.printf(format, "Course Name", "Teachers", "Students");
+        System.out.println(separator);
+
+        courses.stream()
+                .sorted(Comparator.comparing(Course::getSubject))
+                .forEach(course -> {
+                    List<String> teacherNames = teachers.stream()
+                            .filter(t -> t.getCourses().contains(course))
+                            .map(Teacher::getName)
+                            .sorted()
+                            .toList();
+
+                    long studentCount = students.stream()
+                            .filter(s -> s.getCourses().contains(course))
+                            .count();
+
+                    if(teacherNames.isEmpty()) {
+                        System.out.printf(format, course.getSubject(), "-", studentCount);
+                        System.out.println(separator);
+                        return;
+                    }
+
+                    boolean first = true;
+                    for (String teacherName : teacherNames) {
+                        if (first) {
+                            System.out.printf(format, course.getSubject(), teacherName, studentCount);
+                            first = false;
+                        } else {
+                            System.out.printf(format, "", teacherName, "");
+                        }
+                    }
+
+                    System.out.println(separator);
+                });
+        System.out.println();
+    }
+
     public void viewCourse(){
         if (courses.isEmpty()){
+
             System.out.println("No courses found.");
             return;
         }
@@ -274,64 +328,4 @@ public class SchoolSystem implements IMenu {
         return courses.add(new Course(subject));
     }
 
-    public void removeCourseMenu(){
-        TextMenu.menuLoop(
-                "Remove a course from:",
-                new String[] {"Return to main menu", "Teacher", "Student"},
-                new Runnable[]{this::removeCourseFromTeacher, this::removeCourseFromStudent},
-                true
-        );
-    }
-
-    public void removeCourseFromTeacher(){
-        removeCourseFromList(
-                "Select a teacher to remove them from a course",
-                "There are no teachers",
-                new ArrayList<>(teachers)
-        );
-    }
-
-    public void removeCourseFromStudent(){
-        removeCourseFromList(
-                "Select a student to remove them from a course",
-                "There are no students",
-                new ArrayList<>(students)
-        );
-    }
-
-    public void selectCourseToRemove(Person person){
-        if (person.getCourses().isEmpty()){
-            System.out.println("This person has no courses");
-            return;
-        }
-
-        TextMenu.listMenuLoop(
-                "Select the course to remove from "+person.getName(),
-                "Back to main menu",
-                "No courses",
-                new ArrayList<>(person.getCourses()),
-                course -> {
-                    person.removeCourse(course);
-                    System.out.println("Removed successfully!");
-                },
-                true
-        );
-
-    }
-
-    private void removeCourseFromList(String header, String emptyMessage, List<? extends Person> list){
-        if (list.isEmpty()){
-            System.out.println(emptyMessage);
-            return;
-        }
-
-        TextMenu.listMenuLoop(
-                header,
-                "Back to main menu",
-                "No entries",
-                new ArrayList<>(list),
-                this::selectCourseToRemove,
-                true
-        );
-    }
 }
