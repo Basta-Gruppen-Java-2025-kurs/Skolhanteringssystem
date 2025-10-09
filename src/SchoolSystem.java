@@ -1,5 +1,6 @@
 import Helpers.IMenu;
 import Helpers.SafeInput;
+
 import Helpers.TextMenu;
 
 import java.util.ArrayList;
@@ -8,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
+import static Helpers.TextMenu.*;
+
 
 public class SchoolSystem implements IMenu {
     private static SchoolSystem instance;
@@ -34,14 +37,32 @@ public class SchoolSystem implements IMenu {
 
     @Override
     public void menu() {
-        TextMenu.menuLoop(
+        menuLoop(
                 "Welcome to School System!",
-
-                new String[] {"Exit", "Show all students", "Show all teachers", "View a course", "Add students", "Add teachers", "Add courses","Show all courses"},
-                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::viewCourse, this::addStudentsMenu, this::addTeachersMenu, this::addCoursesMenu, this::displayAllCourses},
-
+                new String[] {"Exit", "Show all students", "Show all teachers", "View a course", "Add students", "Add teachers", "Add courses","Show all courses" ,"Assign to courses"},
+                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::viewCourse, this::addStudentsMenu, this::addTeachersMenu, this::addCoursesMenu, this::displayAllCourses, this::assignToCoursesMenu},
                 false);
         System.out.println("Good bye.");
+    }
+
+    private void assignToCoursesMenu() {
+        listMenuLoop("Select course:", "Back", "No courses found.", courses.stream().toList(),
+                course -> listMenuLoop("Assign teachers or students?", "Cancel", "No roles found.", Arrays.asList(Roles.values()),
+                        r -> {
+            ArrayList<Person> personList = new ArrayList<>(switch (r) {
+                case STUDENT -> students.stream().filter(s -> !s.getCourses().contains(course)).toList();
+                case TEACHER -> teachers.stream().filter(t -> !t.getCourses().contains(course)).toList();
+            });
+            String role = r.toString().toLowerCase();
+            listMenuLoop("Add next " + role + ": ", "Stop", "No " + role + "s found.", () -> personList, person -> {
+                if (person.assignCourse(course)) {
+                    personList.remove(person);
+                    System.out.println(r.getName() + " added.");
+                } else {
+                    System.out.println("Failed to add " + r.getName().toLowerCase() + ".");
+                }
+            }, false);
+        }, true), true);
     }
 
     @FunctionalInterface
@@ -193,6 +214,9 @@ public class SchoolSystem implements IMenu {
         System.out.println("\n=== List of Courses ===");
 
         if(courses.isEmpty()) {
+          System.out.println("No courses found. ");
+          return;
+        }
 
   
 
@@ -243,7 +267,7 @@ public class SchoolSystem implements IMenu {
             return;
         }
 
-        TextMenu.listMenuLoop(
+        listMenuLoop(
                 "Select a course to view details:",
                 "Back to main menu",
                 "No active courses",
@@ -328,5 +352,4 @@ public class SchoolSystem implements IMenu {
         }
         return courses.add(new Course(subject));
     }
-
 }
