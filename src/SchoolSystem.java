@@ -1,8 +1,8 @@
 import Helpers.IMenu;
+import Helpers.MenuBuilder;
 import Helpers.SafeInput;
-
 import Helpers.TextMenu;
-
+import java.util.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -37,11 +37,17 @@ public class SchoolSystem implements IMenu {
 
     @Override
     public void menu() {
-        menuLoop(
-                "Welcome to School System!",
-                new String[] {"Exit", "Show all students", "Show all teachers", "View a course", "Add students", "Add teachers", "Add courses","Show all courses" ,"Assign to courses"},
-                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::viewCourse, this::addStudentsMenu, this::addTeachersMenu, this::addCoursesMenu, this::displayAllCourses, this::assignToCoursesMenu},
-                false);
+        new MenuBuilder()
+                .setHeader("Welcome to School System!")
+                .addItem("Show all students", this::listAllStudents)
+                .addItem("Show all teachers", this::displayAllTeachers)
+                .addItem("Show all courses", this::displayAllCourses)
+                .addItem("View a course", this::viewCourse)
+                .addItem("Add students", this::addStudentsMenu)
+                .addItem("Add teachers", this::addTeachersMenu)
+                .addItem("Add courses", this::addCoursesMenu)
+                .addItem("Assign to courses", this::assignToCoursesMenu)
+                .runMenu();
         System.out.println("Good bye.");
     }
 
@@ -262,7 +268,6 @@ public class SchoolSystem implements IMenu {
 
     public void viewCourse(){
         if (courses.isEmpty()){
-
             System.out.println("No courses found.");
             return;
         }
