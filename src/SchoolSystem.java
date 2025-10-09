@@ -1,17 +1,16 @@
 import Helpers.IMenu;
 import Helpers.MenuBuilder;
 import Helpers.SafeInput;
-
+import Helpers.TextMenu;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static Helpers.TextMenu.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
+import static Helpers.TextMenu.*;
+
 
 public class SchoolSystem implements IMenu {
     private static SchoolSystem instance;
@@ -221,8 +220,11 @@ public class SchoolSystem implements IMenu {
         System.out.println("\n=== List of Courses ===");
 
         if(courses.isEmpty()) {
-            return;
+          System.out.println("No courses found. ");
+          return;
         }
+
+  
 
         String format = "| %-21s | %-23s | %10s |%n";
         String separator = "|-----------------------|-------------------------|------------|";
@@ -355,5 +357,4 @@ public class SchoolSystem implements IMenu {
         }
         return courses.add(new Course(subject));
     }
-
 }
