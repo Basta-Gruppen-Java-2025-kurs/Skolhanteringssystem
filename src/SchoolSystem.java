@@ -35,8 +35,8 @@ public class SchoolSystem implements IMenu {
     public void menu() {
         TextMenu.menuLoop(
                 "Welcome to School System!",
-                new String[] {"Exit", "Show all students", "Show all teachers", "Add students", "Add teachers", "Add courses"},
-                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::addStudentsMenu, this::addTeachersMenu, this::addCoursesMenu},
+                new String[] {"Exit", "Show all students", "Show all teachers", "View a course", "Add students", "Add teachers", "Add courses"},
+                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::viewCourse, this::addStudentsMenu, this::addTeachersMenu, this::addCoursesMenu},
                 false);
         System.out.println("Good bye.");
     }
@@ -182,6 +182,74 @@ public class SchoolSystem implements IMenu {
                         t.getExperienceYear()
                 ));
 
+        System.out.println();
+    }
+
+    public void viewCourse(){
+        if (courses.isEmpty()){
+            System.out.println("No courses found.");
+            return;
+        }
+
+        TextMenu.listMenuLoop(
+                "Select a course to view details:",
+                "Back to main menu",
+                "No active courses",
+                new ArrayList<>(courses),
+                this::showCourseDetails,
+                true
+
+        );
+    }
+
+    public void showCourseDetails(Course course){
+        System.out.println("\n=== Course Details ===");
+        System.out.println("Course: "+ course.getName());
+        System.out.println("------------------------");
+
+        System.out.println("\nTeachers:");
+        var courseTeachers = getTeachers().stream()
+                .filter(t -> t.getCourses().contains(course))
+                .sorted(Comparator.comparing(Teacher::getName))
+                .toList();
+
+        if (courseTeachers.isEmpty()){
+            System.out.println(" None assigned.");
+
+        }else {
+            courseTeachers.forEach(t -> System.out.println("  - " + t.getName()));
+        }
+
+        System.out.println("\nStudents:");
+        var courseStudents = getStudents().stream()
+                .filter(s -> s.getCourses().contains(course))
+                .sorted(Comparator.comparing(Student::getName))
+                .toList();
+
+        if (courseStudents.isEmpty()){
+            System.out.println(" None enrolled.");
+        }else {
+            courseStudents.forEach(s -> {
+                var entry = journal.stream()
+                        .filter(j -> j.getCourse().equals(course)&& j.getStudent().equals(s))
+                        .reduce((first, second) -> second)
+                        .orElse(null);
+
+                String gradeText;
+                if (entry == null){
+                    gradeText = "No grade recorded";
+                }else {
+                    gradeText = entry.getGrade().getName();
+
+                    if (entry.getGradeComment() != null){
+                        gradeText += " - " + entry.getGradeComment();
+                    }
+                }
+
+                System.out.println("  - " + s.getName() + " (" + gradeText + ")");
+            });
+
+        }
         System.out.println();
     }
 
