@@ -2,7 +2,7 @@
 
 branch_name=${1:-$(git rev-parse --abbrev-ref HEAD)}
 
-pattern='^(main)$|^(feature|task|fix|bug)\/[a-zA-Z0-9._-]+$'
+pattern='^(main|(feature|task|fix|bug)/[a-zA-Z0-9-]+)$'
 
 if [[ "$branch_name"  =~ $pattern ]]; then
     echo -e "\e[1;32m Branch name '$branch_name' is valid. \e[0m"

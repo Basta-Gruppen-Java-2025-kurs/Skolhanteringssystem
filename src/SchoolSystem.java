@@ -6,6 +6,12 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static Helpers.TextMenu.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SchoolSystem implements IMenu {
     private static SchoolSystem instance;
@@ -36,6 +42,7 @@ public class SchoolSystem implements IMenu {
                 .setHeader("Welcome to School System!")
                 .addItem("Show all students", this::listAllStudents)
                 .addItem("Show all teachers", this::displayAllTeachers)
+                .addItem("Show all courses", this::displayAllCourses)
                 .addItem("View a course", this::viewCourse)
                 .addItem("Add students", this::addStudentsMenu)
                 .addItem("Add teachers", this::addTeachersMenu)
@@ -168,7 +175,7 @@ public class SchoolSystem implements IMenu {
         String format = "| %-20s | %-15s | %-30s | %-10s |%n";
 
         System.out.printf(format, "Name", "Security No", "Email", "Class Year");
-        System.out.println("|----------------------|-----------------|-------------------------------|------------|");
+        System.out.println("|----------------------|-----------------|--------------------------------|------------|");
 
         getStudents().stream()
                 .sorted(Comparator.comparing(Student::getName))
@@ -194,7 +201,7 @@ public class SchoolSystem implements IMenu {
         String format = "| %-20s | %-15s | %-30s | %-18s |%n";
 
         System.out.printf(format, "Name", "Security No", "Email", "Experience (Years)");
-        System.out.println("|----------------------|-----------------|--------------------------------|--------------------|");
+        System.out.println("|----------------------|-----------------|---------------------------------|--------------------|");
 
         getTeachers().stream()
                 .sorted(Comparator.comparing(Teacher::getName))
@@ -206,6 +213,54 @@ public class SchoolSystem implements IMenu {
                         t.getExperienceYear()
                 ));
 
+        System.out.println();
+    }
+
+
+    public void displayAllCourses() {
+        System.out.println("\n=== List of Courses ===");
+
+        if(courses.isEmpty()) {
+            return;
+        }
+
+        String format = "| %-21s | %-23s | %10s |%n";
+        String separator = "|-----------------------|-------------------------|------------|";
+
+        System.out.printf(format, "Course Name", "Teachers", "Students");
+        System.out.println(separator);
+
+        courses.stream()
+                .sorted(Comparator.comparing(Course::getSubject))
+                .forEach(course -> {
+                    List<String> teacherNames = teachers.stream()
+                            .filter(t -> t.getCourses().contains(course))
+                            .map(Teacher::getName)
+                            .sorted()
+                            .toList();
+
+                    long studentCount = students.stream()
+                            .filter(s -> s.getCourses().contains(course))
+                            .count();
+
+                    if(teacherNames.isEmpty()) {
+                        System.out.printf(format, course.getSubject(), "-", studentCount);
+                        System.out.println(separator);
+                        return;
+                    }
+
+                    boolean first = true;
+                    for (String teacherName : teacherNames) {
+                        if (first) {
+                            System.out.printf(format, course.getSubject(), teacherName, studentCount);
+                            first = false;
+                        } else {
+                            System.out.printf(format, "", teacherName, "");
+                        }
+                    }
+
+                    System.out.println(separator);
+                });
         System.out.println();
     }
 
@@ -300,4 +355,5 @@ public class SchoolSystem implements IMenu {
         }
         return courses.add(new Course(subject));
     }
+
 }
