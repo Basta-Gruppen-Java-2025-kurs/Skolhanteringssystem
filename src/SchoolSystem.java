@@ -5,6 +5,7 @@ import Helpers.TextMenu;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -35,8 +36,10 @@ public class SchoolSystem implements IMenu {
     public void menu() {
         TextMenu.menuLoop(
                 "Welcome to School System!",
-                new String[] {"Exit", "Show all students", "Show all teachers", "View a course", "Add students", "Add teachers", "Add courses"},
-                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::viewCourse, this::addStudentsMenu, this::addTeachersMenu, this::addCoursesMenu},
+
+                new String[] {"Exit", "Show all students", "Show all teachers", "View a course", "Add students", "Add teachers", "Add courses","Show all courses"},
+                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::viewCourse, this::addStudentsMenu, this::addTeachersMenu, this::addCoursesMenu, this::displayAllCourses},
+
                 false);
         System.out.println("Good bye.");
     }
@@ -185,8 +188,57 @@ public class SchoolSystem implements IMenu {
         System.out.println();
     }
 
+
+    public void displayAllCourses() {
+        System.out.println("\n=== List of Courses ===");
+
+        if(courses.isEmpty()) {
+
+  
+
+        String format = "| %-21s | %-23s | %10s |%n";
+        String separator = "|-----------------------|-------------------------|------------|";
+
+        System.out.printf(format, "Course Name", "Teachers", "Students");
+        System.out.println(separator);
+
+        courses.stream()
+                .sorted(Comparator.comparing(Course::getSubject))
+                .forEach(course -> {
+                    List<String> teacherNames = teachers.stream()
+                            .filter(t -> t.getCourses().contains(course))
+                            .map(Teacher::getName)
+                            .sorted()
+                            .toList();
+
+                    long studentCount = students.stream()
+                            .filter(s -> s.getCourses().contains(course))
+                            .count();
+
+                    if(teacherNames.isEmpty()) {
+                        System.out.printf(format, course.getSubject(), "-", studentCount);
+                        System.out.println(separator);
+                        return;
+                    }
+
+                    boolean first = true;
+                    for (String teacherName : teacherNames) {
+                        if (first) {
+                            System.out.printf(format, course.getSubject(), teacherName, studentCount);
+                            first = false;
+                        } else {
+                            System.out.printf(format, "", teacherName, "");
+                        }
+                    }
+
+                    System.out.println(separator);
+                });
+        System.out.println();
+    }
+
     public void viewCourse(){
         if (courses.isEmpty()){
+
             System.out.println("No courses found.");
             return;
         }
@@ -276,4 +328,5 @@ public class SchoolSystem implements IMenu {
         }
         return courses.add(new Course(subject));
     }
+
 }
