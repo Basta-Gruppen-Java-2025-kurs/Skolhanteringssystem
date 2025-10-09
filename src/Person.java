@@ -1,21 +1,21 @@
 import Helpers.Named;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 
 public abstract class Person implements Named {
     private String name;
     private String securityNumber;
     private String email;
-    private List<Course> courses;
+    private final HashSet<Course> courses;
 
     public Person(String name, String securityNumber, String email) {
         this.name = name;
         this.securityNumber = securityNumber;
         this.email = email;
-        this.courses = new ArrayList<>();
+        this.courses = new HashSet<>();
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -40,15 +40,20 @@ public abstract class Person implements Named {
         this.email = email;
     }
 
-    public List<Course> getCourses() {
+    public HashSet<Course> getCourses() {
         return courses;
     }
 
-    public void setCourses(List<Course> courses) {
-        this.courses = courses;
+    public boolean assignCourse(Course course) {
+        return courses.add(course);
     }
 
     public void removeCourse(Course course){
         courses.remove(course);
     }
+
+    public boolean unassignCourse(Course course) {
+        return courses.remove(course);
+    }
+
 }

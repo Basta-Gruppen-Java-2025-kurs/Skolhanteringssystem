@@ -1,7 +1,6 @@
 import Helpers.Named;
 
-public class Course implements Named
-{
+public class Course implements Named {
     private String subject;
     
     Course(String subject)

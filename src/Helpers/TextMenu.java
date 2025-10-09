@@ -43,7 +43,8 @@ public class TextMenu {
         } while(choice > 0 && !singleShot);
     }
 
-    public static <T extends Named> void listMenuLoop(String header, String exit, String emptyListMessage, List<T> list, Consumer<T> choiceCallback, boolean singleShot) {
+    public static <T extends Named> void listMenuLoop(String header, String exit, String emptyListMessage, Supplier<List<T>> listSupplier, Consumer<T> choiceCallback, boolean singleShot) {
+        List<T> list = listSupplier.get();
         if (list.isEmpty()) {
             System.out.println(emptyListMessage);
             return;
@@ -57,6 +58,10 @@ public class TextMenu {
             callbacks[i] = () -> choiceCallback.accept(item);
         }
         menuLoop(header, options, callbacks, singleShot);
+    }
+
+    public static <T extends Named> void listMenuLoop(String header, String exit, String emptyListMessage, List<T> list, Consumer<T> choiceCallback, boolean singleShot) {
+        listMenuLoop(header,exit,emptyListMessage, () -> list, choiceCallback, singleShot);
     }
 
     public static boolean yesNoQuestion(String question) {
