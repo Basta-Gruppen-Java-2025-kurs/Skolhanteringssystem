@@ -1,7 +1,9 @@
+import Helpers.Named;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class Person {
+public abstract class Person implements Named {
     private String name;
     private String securityNumber;
     private String email;
@@ -44,5 +46,9 @@ public abstract class Person {
 
     public void setCourses(List<Course> courses) {
         this.courses = courses;
+    }
+
+    public void removeCourse(Course course){
+        courses.remove(course);
     }
 }
