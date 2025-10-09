@@ -1,4 +1,6 @@
-public class Course
+import Helpers.Named;
+
+public class Course implements Named
 {
     private String subject;
     
@@ -15,5 +17,10 @@ public class Course
     public void setSubject(String subject)
     {
         this.subject = subject;
+    }
+
+    @Override
+    public String getName() {
+        return subject;
     }
 }
