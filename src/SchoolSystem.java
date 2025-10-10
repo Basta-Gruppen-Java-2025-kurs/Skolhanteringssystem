@@ -1,6 +1,10 @@
 import Helpers.IMenu;
 import Helpers.TextMenu;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -32,8 +36,8 @@ public class SchoolSystem implements IMenu {
     public void menu() {
         TextMenu.menuLoop(
                 "Welcome to School System!",
-                new String[] {"Exit", "Show all students", "Show all teachers", "View a course"},
-                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::viewCourse},
+                new String[] {"Exit", "Show all students", "Show all teachers", "View a course", "Save Data", "Load Data"},
+                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::viewCourse, this::saveData, this::loadData},
                 false);
         System.out.println("Good bye.");
     }
@@ -170,4 +174,31 @@ public class SchoolSystem implements IMenu {
         }
         System.out.println();
     }
+
+    class dataWrapper
+    {
+        private HashSet<Student> students;
+        private HashSet<Teacher> teachers;
+        private HashSet<Course> courses;
+        private ArrayList<JournalEntry> journal;
+    }
+
+    public void saveData() {
+        try (FileWriter writer = new FileWriter("data.txt")) {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+            dataWrapper dataWrapper = new dataWrapper();
+            dataWrapper.students = students;
+            //dataWrapper.teachers = teachers;
+            //dataWrapper.courses = courses;
+            //dataWrapper.journal = journal;
+            gson.toJson(dataWrapper, writer);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public void loadData() {}
 }
