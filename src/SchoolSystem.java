@@ -3,18 +3,28 @@ import Helpers.TextMenu;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import Helpers.MenuBuilder;
+import Helpers.SafeInput;
+
+import java.util.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
+import static Helpers.TextMenu.*;
+
 
 public class SchoolSystem implements IMenu {
     private static SchoolSystem instance;
-    private final HashSet<Student> students;
-    private final HashSet<Teacher> teachers;
-    private final HashSet<Course> courses;
-    private final ArrayList<JournalEntry> journal;
+    private HashSet<Student> students;
+    private HashSet<Teacher> teachers;
+    private HashSet<Course> courses;
+    private ArrayList<JournalEntry> journal;
 
 
     private SchoolSystem()  {
@@ -34,12 +44,120 @@ public class SchoolSystem implements IMenu {
 
     @Override
     public void menu() {
-        TextMenu.menuLoop(
-                "Welcome to School System!",
-                new String[] {"Exit", "Show all students", "Show all teachers", "View a course", "Save Data", "Load Data"},
-                new Runnable[] {this::listAllStudents, this::displayAllTeachers, this::viewCourse, this::saveData, this::loadData},
-                false);
+        new MenuBuilder()
+                .setHeader("Welcome to School System!")
+                .addItem("Show all students", this::listAllStudents)
+                .addItem("Show all teachers", this::displayAllTeachers)
+                .addItem("Show all courses", this::displayAllCourses)
+                .addItem("View a course", this::viewCourse)
+                .addItem("Add students", this::addStudentsMenu)
+                .addItem("Add teachers", this::addTeachersMenu)
+                .addItem("Add courses", this::addCoursesMenu)
+                .addItem("Assign to courses", this::assignToCoursesMenu)
+                .addItem("Remove course from Teacher or Student", this::removeCourseMenu)
+                .addItem("Save Data", this::saveData)
+                .addItem("Load Data", this::loadData)
+                .runMenu();
         System.out.println("Good bye.");
+    }
+
+    private void assignToCoursesMenu() {
+        listMenuLoop("Select course:", "Back", "No courses found.", courses.stream().toList(),
+                course -> listMenuLoop("Assign teachers or students?", "Cancel", "No roles found.", Arrays.asList(Roles.values()),
+                        r -> {
+            ArrayList<Person> personList = new ArrayList<>(switch (r) {
+                case STUDENT -> students.stream().filter(s -> !s.getCourses().contains(course)).toList();
+                case TEACHER -> teachers.stream().filter(t -> !t.getCourses().contains(course)).toList();
+            });
+            String role = r.toString().toLowerCase();
+            listMenuLoop("Add next " + role + ": ", "Stop", "No " + role + "s found.", () -> personList, person -> {
+                if (person.assignCourse(course)) {
+                    personList.remove(person);
+                    System.out.println(r.getName() + " added.");
+                } else {
+                    System.out.println("Failed to add " + r.getName().toLowerCase() + ".");
+                }
+            }, false);
+        }, true), true);
+    }
+
+    @FunctionalInterface
+    interface PersonProcessor {
+        void process(String name, String personalNumber, String email, int year);
+    }
+
+    private boolean enterNextPerson(String yearPrompt, PersonProcessor callback) {
+        AtomicBoolean fullDataEntered = new AtomicBoolean(false);
+        SafeInput si = new SafeInput(new Scanner(System.in));
+        String name = si.nextLine("Please enter full name (empty to stop):");
+        if (name.isBlank()) {
+            return false;
+        }
+        si.nameInputLoop("Please enter email (empty to stop):", "", ". Please try again", email -> {
+            if (email.isBlank()) {
+                return false;
+            }
+            String emailError = Validator.validateEmail(email);
+            if (!emailError.isBlank()) {
+                System.out.print(Validator.Capitalize(emailError));
+                return false;
+            }
+            si.nameInputLoop("Please enter security number (empty to stop)", "", ". Please try again", securityNumber -> {
+                if (securityNumber.isBlank()) {
+                    return true;
+                }
+                String validationError = Validator.validateSecurityNumber(securityNumber);
+                if (!validationError.isBlank()) {
+                    System.out.print(Validator.Capitalize(validationError));
+                    return false;
+                }
+                int years = si.nextInt(yearPrompt, "Wrong number. Please try again.", 0, 1000);
+                callback.process(name, securityNumber, email, years);
+                fullDataEntered.set(true);
+                return true;
+            });
+            return true;
+        });
+        return fullDataEntered.get();
+    }
+
+    private void addTeachersMenu() {
+        while(enterNextPerson("Please enter years of experience:", (name,securityNumber,email,experienceYears) -> {
+            try {
+                System.out.println(addTeacher(name, securityNumber, email, experienceYears) ? "Teacher added." : "Failed to add teacher.");
+            } catch (InvalidPersonalData e) {
+                System.out.println("Error adding a new teacher: " + e);
+            }
+        })) {
+            System.out.println("Add next teacher");
+        }
+    }
+
+    private void addStudentsMenu() {
+        while(enterNextPerson("Please enter class year:", (name,securityNumber,email,classYear) -> {
+            try {
+                System.out.println(addStudent(name, securityNumber, email, classYear) ? "Student added." : "Failed to add student.");
+            } catch (InvalidPersonalData e) {
+                System.out.println("Error adding a new student: " + e);
+            }
+        })) {
+            System.out.println("Add next student");
+        }
+    }
+
+    private void addCoursesMenu() {
+        SafeInput si = new SafeInput(new Scanner(System.in));
+        while(true) {
+            String courseName = si.nextLine("Please enter course name (empty to stop):");
+            if (courseName.isBlank()) {
+                return;
+            }
+            try {
+                System.out.println(addCourse(courseName) ? "Course added." : "Failed to add course.");
+            } catch (InvalidCourseData e) {
+                System.out.println("Error adding a course: " + e);
+            }
+        }
     }
 
     public HashSet<Student> getStudents() {
@@ -66,7 +184,7 @@ public class SchoolSystem implements IMenu {
         String format = "| %-20s | %-15s | %-30s | %-10s |%n";
 
         System.out.printf(format, "Name", "Security No", "Email", "Class Year");
-        System.out.println("|----------------------|-----------------|-------------------------------|------------|");
+        System.out.println("|----------------------|-----------------|--------------------------------|------------|");
 
         getStudents().stream()
                 .sorted(Comparator.comparing(Student::getName))
@@ -92,7 +210,7 @@ public class SchoolSystem implements IMenu {
         String format = "| %-20s | %-15s | %-30s | %-18s |%n";
 
         System.out.printf(format, "Name", "Security No", "Email", "Experience (Years)");
-        System.out.println("|----------------------|-----------------|--------------------------------|--------------------|");
+        System.out.println("|----------------------|-----------------|---------------------------------|--------------------|");
 
         getTeachers().stream()
                 .sorted(Comparator.comparing(Teacher::getName))
@@ -107,13 +225,64 @@ public class SchoolSystem implements IMenu {
         System.out.println();
     }
 
+
+    public void displayAllCourses() {
+        System.out.println("\n=== List of Courses ===");
+
+        if(courses.isEmpty()) {
+          System.out.println("No courses found. ");
+          return;
+        }
+
+  
+
+        String format = "| %-21s | %-23s | %10s |%n";
+        String separator = "|-----------------------|-------------------------|------------|";
+
+        System.out.printf(format, "Course Name", "Teachers", "Students");
+        System.out.println(separator);
+
+        courses.stream()
+                .sorted(Comparator.comparing(Course::getSubject))
+                .forEach(course -> {
+                    List<String> teacherNames = teachers.stream()
+                            .filter(t -> t.getCourses().contains(course))
+                            .map(Teacher::getName)
+                            .sorted()
+                            .toList();
+
+                    long studentCount = students.stream()
+                            .filter(s -> s.getCourses().contains(course))
+                            .count();
+
+                    if(teacherNames.isEmpty()) {
+                        System.out.printf(format, course.getSubject(), "-", studentCount);
+                        System.out.println(separator);
+                        return;
+                    }
+
+                    boolean first = true;
+                    for (String teacherName : teacherNames) {
+                        if (first) {
+                            System.out.printf(format, course.getSubject(), teacherName, studentCount);
+                            first = false;
+                        } else {
+                            System.out.printf(format, "", teacherName, "");
+                        }
+                    }
+
+                    System.out.println(separator);
+                });
+        System.out.println();
+    }
+
     public void viewCourse(){
         if (courses.isEmpty()){
             System.out.println("No courses found.");
             return;
         }
 
-        TextMenu.listMenuLoop(
+        listMenuLoop(
                 "Select a course to view details:",
                 "Back to main menu",
                 "No active courses",
@@ -183,15 +352,16 @@ public class SchoolSystem implements IMenu {
         private ArrayList<JournalEntry> journal;
     }
 
-    public void saveData() {
+    public void saveData()
+    {
         try (FileWriter writer = new FileWriter("data.txt")) {
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            Gson gson = GsonProvider.buildGson();
 
             dataWrapper dataWrapper = new dataWrapper();
             dataWrapper.students = students;
-            //dataWrapper.teachers = teachers;
-            //dataWrapper.courses = courses;
-            //dataWrapper.journal = journal;
+            dataWrapper.teachers = teachers;
+            dataWrapper.courses = courses;
+            dataWrapper.journal = journal;
             gson.toJson(dataWrapper, writer);
         }
         catch (IOException e)
@@ -200,5 +370,105 @@ public class SchoolSystem implements IMenu {
         }
     }
 
-    public void loadData() {}
+    public void loadData()
+    {
+        try (FileReader reader = new FileReader("data.txt"))
+        {
+            Gson gson = GsonProvider.buildGson();
+
+            dataWrapper data = gson.fromJson(reader, dataWrapper.class);
+
+            this.students = data.students;
+            this.teachers = data.teachers;
+            this.courses = data.courses;
+            this.journal = data.journal;
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean addTeacher(String name, String securityNumber, String email, int experienceYears) {
+        String validation = Validator.validatePersonalData(name, securityNumber, email, experienceYears);
+        if (!validation.isEmpty()) {
+            throw new InvalidPersonalData("Error adding new teacher: " + validation);
+        }
+        return teachers.add(new Teacher(name, securityNumber, email, experienceYears));
+    }
+
+    public boolean addStudent(String name, String securityNumber, String email, int classYear) {
+        String validation = Validator.validatePersonalData(name, securityNumber, email, classYear);
+        if (!validation.isEmpty()) {
+            throw new InvalidPersonalData("Error adding new student: " + validation);
+        }
+        return students.add(new Student(name, securityNumber, email, classYear));
+    }
+
+    public boolean addCourse(String subject) {
+        if (subject.isBlank()) {
+            throw new InvalidCourseData("Empty course name");
+        }
+        return courses.add(new Course(subject));
+    }
+    public void removeCourseMenu(){
+        menuLoop(
+                "Remove a course from:",
+                new String[] {"Return to main menu", "Teacher", "Student"},
+                new Runnable[]{this::removeCourseFromTeacher, this::removeCourseFromStudent},
+                true
+        );
+    }
+
+    public void removeCourseFromTeacher(){
+        removeCourseFromList(
+                "Select a teacher to remove them from a course",
+                "There are no teachers",
+                new ArrayList<>(teachers)
+        );
+    }
+
+    public void removeCourseFromStudent(){
+        removeCourseFromList(
+                "Select a student to remove them from a course",
+                "There are no students",
+                new ArrayList<>(students)
+        );
+    }
+
+    public void selectCourseToRemove(Person person){
+        if (person.getCourses().isEmpty()){
+            System.out.println("This person has no courses");
+            return;
+        }
+
+        listMenuLoop(
+                "Select the course to remove from "+person.getName(),
+                "Back to main menu",
+                "No courses",
+                new ArrayList<>(person.getCourses()),
+                course -> {
+                    person.removeCourse(course);
+                    System.out.println("Removed successfully!");
+                },
+                true
+        );
+
+    }
+
+    private void removeCourseFromList(String header, String emptyMessage, List<? extends Person> list){
+        if (list.isEmpty()){
+            System.out.println(emptyMessage);
+            return;
+        }
+
+        listMenuLoop(
+                header,
+                "Back to main menu",
+                "No entries",
+                new ArrayList<>(list),
+                this::selectCourseToRemove,
+                true
+        );
+    }
 }
