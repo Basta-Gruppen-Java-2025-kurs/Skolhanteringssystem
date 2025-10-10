@@ -1,6 +1,5 @@
 import Helpers.IMenu;
 import Helpers.SafeInput;
-import Helpers.TextMenu;
 import Helpers.MenuBuilder;
 
 import java.time.LocalDate;
@@ -27,54 +26,6 @@ public class SchoolSystem implements IMenu {
         teachers = new HashSet<>();
         courses = new HashSet<>();
         journal = new ArrayList<>();
-
-        Teacher anna = new Teacher("Anna Andersson", "198001011234", "anna@school.com", 10);
-        Teacher bjorn = new Teacher("Björn Berg", "197512125678", "bjorn@school.com", 15);
-        Teacher carina = new Teacher("Carina Carlsson", "199003039999", "carina@school.com", 8);
-
-        teachers.add(anna);
-        teachers.add(bjorn);
-        teachers.add(carina);
-
-        // Kurser
-        Course math = new Course("Mathematics");
-        Course physics = new Course("Physics");
-        Course programming = new Course("Programming");
-        Course english = new Course("English");
-
-        courses.add(math);
-        courses.add(physics);
-        courses.add(programming);
-        courses.add(english);
-
-        // Elever
-        Student david = new Student("David Dahl", "200601011234", "david@student.com", 1);
-        Student emma = new Student("Emma Ek", "200505052222", "emma@student.com", 2);
-        Student fredrik = new Student("Fredrik Fors", "200404043333", "fredrik@student.com", 3);
-
-        students.add(david);
-        students.add(emma);
-        students.add(fredrik);
-
-        // Koppla kurser till lärare
-        anna.assignCourse(math);
-        anna.assignCourse(english);
-        bjorn.assignCourse(physics);
-        bjorn.assignCourse(math);
-        carina.assignCourse(programming);
-
-        // Koppla kurser till elever
-        david.assignCourse(math);
-        david.assignCourse(physics);
-
-        emma.assignCourse(english);
-        emma.assignCourse(programming);
-
-        fredrik.assignCourse(math);
-        fredrik.assignCourse(programming);
-        fredrik.assignCourse(english);
-
-
     }
 
     public static SchoolSystem getInstance() {
@@ -489,7 +440,7 @@ public class SchoolSystem implements IMenu {
         Course course = null;
         while (course == null) {
             System.out.println("\nSelec a course from " + teacher.getName() + "´s courses: ");
-            List<Course> teacherCourses = teacher.getCourses();
+            List<Course> teacherCourses = new ArrayList<>(teacher.getCourses());
 
             int i = 1;
             for (Course c : teacherCourses) {
@@ -515,11 +466,12 @@ public class SchoolSystem implements IMenu {
             System.out.println("\nSelect student to give grade in course " + course.getSubject() + ": ");
 
             int i = 1;
-            for (Student s : students) {
+            for (Student s : courseStudents) {
                 System.out.println(i + ". " + s.getName());
                 i++;
             }
             int choice = si.nextInt("Enter number (0 to cancel): ");
+            si.nextLine("");
             if (choice == 0) return;
             student = courseStudents.get(choice - 1);
         }
@@ -538,5 +490,21 @@ public class SchoolSystem implements IMenu {
 
         JournalEntry entry = new JournalEntry(course, teacher, student, grade, comment, LocalDate.now());
         journal.add(entry);
+
+        System.out.println(String.format("""
+            ✅ Journal entry added:
+            Course : %s
+            Teacher: %s
+            Student: %s
+            Grade  : %s%s
+            Date   : %s
+           """,
+                entry.getCourse().getSubject(),
+                entry.getTeacher().getName(),
+                entry.getStudent().getName(),
+                entry.getGrade().name(),
+                (entry.getGradeComment() != null && !entry.getGradeComment().isBlank()) ? " - " + entry.getGradeComment() : "",
+                entry.getDate()
+        ));
     }
 }
