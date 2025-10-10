@@ -1,4 +1,11 @@
 import Helpers.IMenu;
+import Helpers.TextMenu;
+import com.google.gson.Gson;
+
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import Helpers.MenuBuilder;
 import Helpers.SafeInput;
 import Helpers.MenuBuilder;
 
@@ -15,10 +22,10 @@ import static Helpers.TextMenu.*;
 
 public class SchoolSystem implements IMenu {
     private static SchoolSystem instance;
-    private final HashSet<Student> students;
-    private final HashSet<Teacher> teachers;
-    private final HashSet<Course> courses;
-    private final ArrayList<JournalEntry> journal;
+    private HashSet<Student> students;
+    private HashSet<Teacher> teachers;
+    private HashSet<Course> courses;
+    private ArrayList<JournalEntry> journal;
 
 
     private SchoolSystem()  {
@@ -50,6 +57,8 @@ public class SchoolSystem implements IMenu {
                 .addItem("Assign to courses", this::assignToCoursesMenu)
                 .addItem("Remove course from Teacher or Student", this::removeCourseMenu)
                 .addItem("Set grade", this::addJournalEntryMenu)
+                .addItem("Save Data", this::saveData)
+                .addItem("Load Data", this::loadData)
                 .runMenu();
         System.out.println("Good bye.");
     }
@@ -337,6 +346,50 @@ public class SchoolSystem implements IMenu {
         System.out.println();
     }
 
+    class dataWrapper
+    {
+        private HashSet<Student> students;
+        private HashSet<Teacher> teachers;
+        private HashSet<Course> courses;
+        private ArrayList<JournalEntry> journal;
+    }
+
+    public void saveData()
+    {
+        try (FileWriter writer = new FileWriter("data.txt")) {
+            Gson gson = GsonProvider.buildGson();
+
+            dataWrapper dataWrapper = new dataWrapper();
+            dataWrapper.students = students;
+            dataWrapper.teachers = teachers;
+            dataWrapper.courses = courses;
+            dataWrapper.journal = journal;
+            gson.toJson(dataWrapper, writer);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public void loadData()
+    {
+        try (FileReader reader = new FileReader("data.txt"))
+        {
+            Gson gson = GsonProvider.buildGson();
+
+            dataWrapper data = gson.fromJson(reader, dataWrapper.class);
+
+            this.students = data.students;
+            this.teachers = data.teachers;
+            this.courses = data.courses;
+            this.journal = data.journal;
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
 
     public boolean addTeacher(String name, String securityNumber, String email, int experienceYears) {
         String validation = Validator.validatePersonalData(name, securityNumber, email, experienceYears);
