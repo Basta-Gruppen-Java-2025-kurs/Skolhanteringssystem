@@ -1,7 +1,8 @@
 import Helpers.IMenu;
-import Helpers.MenuBuilder;
 import Helpers.SafeInput;
+import Helpers.MenuBuilder;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -48,6 +49,7 @@ public class SchoolSystem implements IMenu {
                 .addItem("Add courses", this::addCoursesMenu)
                 .addItem("Assign to courses", this::assignToCoursesMenu)
                 .addItem("Remove course from Teacher or Student", this::removeCourseMenu)
+                .addItem("Set grade", this::addJournalEntryMenu)
                 .runMenu();
         System.out.println("Good bye.");
     }
@@ -225,7 +227,7 @@ public class SchoolSystem implements IMenu {
           return;
         }
 
-  
+
 
         String format = "| %-21s | %-23s | %10s |%n";
         String separator = "|-----------------------|-------------------------|------------|";
@@ -417,5 +419,92 @@ public class SchoolSystem implements IMenu {
                 this::selectCourseToRemove,
                 true
         );
+    }
+
+    public void addJournalEntryMenu() {
+        SafeInput si = new SafeInput(new Scanner(System.in));
+
+        Teacher teacher = null;
+        while (teacher == null) {
+            System.out.println("\nSelect a teacher:");
+            int i = 1;
+            for (Teacher t : teachers) {
+                System.out.println(i + ". " + t.getName());
+                i++;
+            }
+            int choice = si.nextInt("Enter number (0 to cancel): ");
+            if (choice == 0) return;
+            teacher = new ArrayList<>(teachers).get(choice - 1);
+        }
+
+        Course course = null;
+        while (course == null) {
+            System.out.println("\nSelec a course from " + teacher.getName() + "´s courses: ");
+            List<Course> teacherCourses = new ArrayList<>(teacher.getCourses());
+
+            int i = 1;
+            for (Course c : teacherCourses) {
+                System.out.println(i + ". " + c.getSubject());
+                i++;
+            }
+            int choice = si.nextInt("Enter number (0 to cancel): ");
+            if (choice <= 0 || choice > teacherCourses.size()) return;
+            course = teacherCourses.get(choice - 1);
+        }
+        final Course selectedCourse = course;
+
+        List<Student> courseStudents = students.stream()
+                .filter(s -> s.getCourses().contains(selectedCourse))
+                .toList();
+        if (courseStudents.isEmpty()) {
+            System.out.println("No students in this course.");
+            return;
+        }
+
+        Student student = null;
+        while (student == null) {
+            System.out.println("\nSelect student to give grade in course " + course.getSubject() + ": ");
+
+            int i = 1;
+            for (Student s : courseStudents) {
+                System.out.println(i + ". " + s.getName());
+                i++;
+            }
+            int choice = si.nextInt("Enter number (0 to cancel): ");
+            si.nextLine("");
+            if (choice == 0) return;
+            student = courseStudents.get(choice - 1);
+        }
+
+        Grade grade = null;
+        while (grade == null) {
+            String gradeStr = si.nextLine("Enter grade (A-F, NA, ABSENT, SPECIAL): ").toUpperCase();
+            try {
+                grade = Grade.valueOf(gradeStr);
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid grade. Try again.");
+            }
+        }
+
+        String comment = si.nextLine("Enter comment (optional): ");
+
+        JournalEntry entry = new JournalEntry(course, teacher, student, grade, comment, LocalDate.now());
+        journal.add(entry);
+
+        System.out.println(String.format("""
+            ✅ Journal entry added:
+            Course : %s
+            Teacher: %s
+            Student: %s
+            Grade  : %s%s
+            Date   : %s
+           """,
+                entry.getCourse().getSubject(),
+                entry.getTeacher().getName(),
+                entry.getStudent().getName(),
+                entry.getGrade().name(),
+                (entry.getGradeComment() != null && !entry.getGradeComment().isBlank()) ? " - " + entry.getGradeComment() : "",
+                entry.getDate()
+        ));
     }
 }

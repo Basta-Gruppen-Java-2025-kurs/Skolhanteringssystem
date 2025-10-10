@@ -1,5 +1,4 @@
 import Helpers.Named;
-
 import java.util.HashSet;
 
 public abstract class Person implements Named {
