@@ -1,7 +1,9 @@
 import Helpers.IMenu;
-import Helpers.MenuBuilder;
 import Helpers.SafeInput;
+import Helpers.TextMenu;
+import Helpers.MenuBuilder;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -25,6 +27,54 @@ public class SchoolSystem implements IMenu {
         teachers = new HashSet<>();
         courses = new HashSet<>();
         journal = new ArrayList<>();
+
+        Teacher anna = new Teacher("Anna Andersson", "198001011234", "anna@school.com", 10);
+        Teacher bjorn = new Teacher("Björn Berg", "197512125678", "bjorn@school.com", 15);
+        Teacher carina = new Teacher("Carina Carlsson", "199003039999", "carina@school.com", 8);
+
+        teachers.add(anna);
+        teachers.add(bjorn);
+        teachers.add(carina);
+
+        // Kurser
+        Course math = new Course("Mathematics");
+        Course physics = new Course("Physics");
+        Course programming = new Course("Programming");
+        Course english = new Course("English");
+
+        courses.add(math);
+        courses.add(physics);
+        courses.add(programming);
+        courses.add(english);
+
+        // Elever
+        Student david = new Student("David Dahl", "200601011234", "david@student.com", 1);
+        Student emma = new Student("Emma Ek", "200505052222", "emma@student.com", 2);
+        Student fredrik = new Student("Fredrik Fors", "200404043333", "fredrik@student.com", 3);
+
+        students.add(david);
+        students.add(emma);
+        students.add(fredrik);
+
+        // Koppla kurser till lärare
+        anna.assignCourse(math);
+        anna.assignCourse(english);
+        bjorn.assignCourse(physics);
+        bjorn.assignCourse(math);
+        carina.assignCourse(programming);
+
+        // Koppla kurser till elever
+        david.assignCourse(math);
+        david.assignCourse(physics);
+
+        emma.assignCourse(english);
+        emma.assignCourse(programming);
+
+        fredrik.assignCourse(math);
+        fredrik.assignCourse(programming);
+        fredrik.assignCourse(english);
+
+
     }
 
     public static SchoolSystem getInstance() {
@@ -48,6 +98,7 @@ public class SchoolSystem implements IMenu {
                 .addItem("Add courses", this::addCoursesMenu)
                 .addItem("Assign to courses", this::assignToCoursesMenu)
                 .addItem("Remove course from Teacher or Student", this::removeCourseMenu)
+                .addItem("Set grade", this::addJournalEntryMenu)
                 .runMenu();
         System.out.println("Good bye.");
     }
@@ -225,7 +276,7 @@ public class SchoolSystem implements IMenu {
           return;
         }
 
-  
+
 
         String format = "| %-21s | %-23s | %10s |%n";
         String separator = "|-----------------------|-------------------------|------------|";
@@ -417,5 +468,75 @@ public class SchoolSystem implements IMenu {
                 this::selectCourseToRemove,
                 true
         );
+    }
+
+    public void addJournalEntryMenu() {
+        SafeInput si = new SafeInput(new Scanner(System.in));
+
+        Teacher teacher = null;
+        while (teacher == null) {
+            System.out.println("\nSelect a teacher:");
+            int i = 1;
+            for (Teacher t : teachers) {
+                System.out.println(i + ". " + t.getName());
+                i++;
+            }
+            int choice = si.nextInt("Enter number (0 to cancel): ");
+            if (choice == 0) return;
+            teacher = new ArrayList<>(teachers).get(choice - 1);
+        }
+
+        Course course = null;
+        while (course == null) {
+            System.out.println("\nSelec a course from " + teacher.getName() + "´s courses: ");
+            List<Course> teacherCourses = teacher.getCourses();
+
+            int i = 1;
+            for (Course c : teacherCourses) {
+                System.out.println(i + ". " + c.getSubject());
+                i++;
+            }
+            int choice = si.nextInt("Enter number (0 to cancel): ");
+            if (choice <= 0 || choice > teacherCourses.size()) return;
+            course = teacherCourses.get(choice - 1);
+        }
+        final Course selectedCourse = course;
+
+        List<Student> courseStudents = students.stream()
+                .filter(s -> s.getCourses().contains(selectedCourse))
+                .toList();
+        if (courseStudents.isEmpty()) {
+            System.out.println("No students in this course.");
+            return;
+        }
+
+        Student student = null;
+        while (student == null) {
+            System.out.println("\nSelect student to give grade in course " + course.getSubject() + ": ");
+
+            int i = 1;
+            for (Student s : students) {
+                System.out.println(i + ". " + s.getName());
+                i++;
+            }
+            int choice = si.nextInt("Enter number (0 to cancel): ");
+            if (choice == 0) return;
+            student = courseStudents.get(choice - 1);
+        }
+
+        Grade grade = null;
+        while (grade == null) {
+            String gradeStr = si.nextLine("Enter grade (A-F, NA, ABSENT, SPECIAL): ").toUpperCase();
+            try {
+                grade = Grade.valueOf(gradeStr);
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid grade. Try again.");
+            }
+        }
+
+        String comment = si.nextLine("Enter comment (optional): ");
+
+        JournalEntry entry = new JournalEntry(course, teacher, student, grade, comment, LocalDate.now());
+        journal.add(entry);
     }
 }
