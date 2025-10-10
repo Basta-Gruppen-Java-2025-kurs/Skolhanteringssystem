@@ -1,0 +1,11 @@
+{
+  "students": [
+    {
+      "classYear": 2020,
+      "name": "Bob",
+      "securityNumber": "0545345",
+      "email": "Bob@outlook.com",
+      "courses": []
+    }
+  ]
+}
